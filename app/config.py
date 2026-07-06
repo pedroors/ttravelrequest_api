@@ -41,5 +41,21 @@ TRECHOS_FIXOS = [
     ("AJU", "GRU")
 ]
 
-MAX_CONCURRENT_JOBS = 3 
+# Mapeamento de clientes para suportar múltiplos clientes
+CLIENTES_CONFIG = {
+    None: {
+        "id": FIXED_CLIENT_ID,  # Cliente padrão: 40709
+        "nome": "CLIENTE_ATUAL"
+    },
+    55942: {
+        "id": "55942",
+        "nome": "CNT"
+    },
+    55943: {
+        "id": "55943",
+        "nome": "FLYTOUR"
+    }
+}
+
+MAX_CONCURRENT_JOBS = 3
 CONCURRENCY_LIMIT = threading.Semaphore(MAX_CONCURRENT_JOBS)

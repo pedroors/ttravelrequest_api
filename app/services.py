@@ -7,7 +7,7 @@ from typing import List
 # Importa as constantes e limites
 from .config import (
     BASE_HEADERS, LOGIN_USER, LOGIN_PASS, FIXED_CLIENT_ID,
-    TRECHOS_FIXOS, CONCURRENCY_LIMIT, MAX_CONCURRENT_JOBS
+    TRECHOS_FIXOS, CONCURRENCY_LIMIT, MAX_CONCURRENT_JOBS, CLIENTES_CONFIG
 )
 
 # Importa as funções de lógica
@@ -57,32 +57,40 @@ def run_single_search(client_id: str, origin: str, destination: str, date: str) 
             raise HTTPException(status_code=500, detail=f"Erro interno inesperado no fluxo: {str(e)}")
 
 
-def run_fixed_search() -> List[VooResponse]:
+def run_fixed_search(cliente_indice: int | None = None) -> List[VooResponse]:
     """
     Busca 5 trechos pré-determinados em paralelo.
     Faz o LOGIN UMA VEZ e depois busca tokens novos para cada busca paralela.
+
+    Args:
+        cliente_indice: Índice do cliente (None=padrão, 55942=CNT, 55943=FLYTOUR)
     """
-    
+
+    # Obtém a configuração do cliente baseada no índice
+    cliente_config = CLIENTES_CONFIG.get(cliente_indice, CLIENTES_CONFIG[None])
+    client_id = cliente_config["id"]
+    client_name = cliente_config["nome"]
+
     data_busca = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
-    print(f"Iniciando busca de trechos fixos (Login Único + Tokens Novos) para a data: {data_busca}")
-    
+    print(f"[{client_name}] Iniciando busca de trechos fixos (Login Único + Tokens Novos) para a data: {data_busca}")
+
     resultados_por_trecho = {}
 
     # Cria uma sessão única que será compartilhada pelas threads
     with requests.Session() as session:
         session.headers.update(BASE_HEADERS)
-        
+
         try:
             # --- ETAPA DE LOGIN (EXECUTADA SÓ UMA VEZ) ---
-            print("[Fluxo Fixo] Executando Login Único...")
+            print(f"[{client_name}] Executando Login Único...")
             response_login = perform_login_com_mfa(session, LOGIN_USER, LOGIN_PASS)
-            response_select = select_client(session, response_login, FIXED_CLIENT_ID)
+            response_select = select_client(session, response_login, client_id)
             
             pagina_busca_url = response_select.url
-            print(f"[Fluxo Fixo] Login Único bem-sucedido. Página de busca: {pagina_busca_url}")
+            print(f"[{client_name}] Login Único bem-sucedido. Página de busca: {pagina_busca_url}")
 
         except Exception as e:
-            print(f"[Fluxo Fixo] Falha no processo de Login Único: {e}")
+            print(f"[{client_name}] Falha no processo de Login Único: {e}")
             raise HTTPException(status_code=503, detail=f"Falha ao estabelecer sessão de login única: {e}")
 
         

@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends
 from typing import List
 
 # Importa os modelos, segurança e serviços dos outros arquivos
-from .models import BuscaRequest, VooResponse
+from .models import BuscaRequest, BuscaFixaRequest, VooResponse
 from .security import get_api_key
 from .services import run_single_search, run_fixed_search
 from .config import CONCURRENCY_LIMIT # Importa o semaphore
@@ -37,14 +37,19 @@ def api_buscar_voos(request: BuscaRequest):
 @app.post("/buscar-trechos-fixos",
           response_model=List[VooResponse],
           dependencies=[Depends(get_api_key)])
-def api_buscar_trechos_fixos():
+def api_buscar_trechos_fixos(request: BuscaFixaRequest):
     """
     Busca 5 trechos pré-determinados em paralelo.
     A data da busca é sempre D+7 (7 dias a partir de hoje).
     Os resultados são retornados na ordem pré-definida.
+
+    Opcionalmente, aceita um 'cliente_indice' para buscar dados de clientes diferentes:
+    - None (padrão): Cliente ATUAL (40709)
+    - 55942: Cliente CNT
+    - 55943: Cliente FLYTOUR
     """
     # A lógica de concorrência já está dentro de 'run_fixed_search'
-    return run_fixed_search()
+    return run_fixed_search(cliente_indice=request.cliente_indice)
 
 
 @app.get("/", include_in_schema=False)

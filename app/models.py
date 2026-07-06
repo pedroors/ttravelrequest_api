@@ -7,6 +7,10 @@ class BuscaRequest(BaseModel):
     destination: str = Field(..., description="Aeroporto de destino (IATA)", examples=["SSA"])
     date: str = Field(..., description="Data da viagem (Formato: YYYY-MM-DD)", examples=["2025-10-30"])
 
+class BuscaFixaRequest(BaseModel):
+    """Define o corpo da requisição para /buscar-trechos-fixos com suporte a múltiplos clientes."""
+    cliente_indice: int | None = Field(None, description="Índice do cliente (null=padrão, 125=CNT, 183=FLYTOUR)", examples=[None, 55942, 55943])
+
 class VooResponse(BaseModel):
     """Define a estrutura de um voo na resposta final."""
     Trecho: str | None
